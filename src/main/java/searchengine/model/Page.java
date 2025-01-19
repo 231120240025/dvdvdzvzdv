@@ -25,8 +25,9 @@ public class Page {
     @JoinColumn(name = "site_id", nullable = false)
     private Site site;
 
-    @Column(length = 255, nullable = false)
+    @Column(length = 500, nullable = false) // Increase length to accommodate longer paths
     private String path;
+
 
     @Column(nullable = false)
     private int code;
@@ -34,7 +35,7 @@ public class Page {
     @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
     private String content;
 
-    @Column(length = 255)
+    @Column(length = 500)
     private String contentType; // Столбец для хранения типа содержимого (например, "image/png")
 
     // Дополнительное поле для хранения заголовка страницы

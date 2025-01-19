@@ -32,10 +32,10 @@ public class Site {
     @Column(columnDefinition = "TEXT")
     private String lastError;
 
-    @Column(length = 255, nullable = false, unique = true)
+    @Column(length = 500, nullable = false, unique = true)
     private String url;
 
-    @Column(length = 255, nullable = false)
+    @Column(length = 500, nullable = false)
     private String name;
 
     @OneToMany(mappedBy = "site", cascade = CascadeType.ALL, orphanRemoval = true)
