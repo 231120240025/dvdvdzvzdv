@@ -8,6 +8,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(indexes = @Index(name = "index_path", columnList = "path"))
 public class Page {
 
     @Id
