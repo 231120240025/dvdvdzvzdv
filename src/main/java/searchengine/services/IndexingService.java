@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import searchengine.config.SitesList;
 import searchengine.model.Site;
+import searchengine.model.Status;  // Импортируем перечисление Status
 import searchengine.repositories.SiteRepository;
 import searchengine.repositories.PageRepository;
 
@@ -42,7 +43,10 @@ public class IndexingService {
                     Site site = new Site();
                     site.setUrl(configSite.getUrl());
                     site.setName(configSite.getName());
-                    // При необходимости добавьте другие свойства в объект site
+                    site.setStatus(Status.INDEXING);  // Устанавливаем статус "INDEXING" перед началом индексации
+
+                    // Сохраняем сайт с текущим статусом в базе данных
+                    siteRepository.save(site);
 
                     // Удаляем все страницы, связанные с этим сайтом
                     int deletedPages = pageRepository.deleteBySite(site);  // Удаляет страницы, связанные с данным сайтом
