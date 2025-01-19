@@ -1,26 +1,32 @@
 package searchengine.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
 @Entity
+@Table(
+        name = "page",
+        indexes = {@jakarta.persistence.Index(name = "idx_path", columnList = "path")}
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@Table(indexes = @Index(name = "index_path", columnList = "path"))
 public class Page {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id; // Изменено с int на Integer для поддержки null
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "site_id", nullable = false)
     private Site site;
 
-    @Column(nullable = false, length = 255)
-    private String path;  // индексируемое поле
+    @Column(length = 255, nullable = false)
+    private String path;
 
     @Column(nullable = false)
     private int code;
@@ -28,9 +34,32 @@ public class Page {
     @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
     private String content;
 
-    @Column(columnDefinition = "VARCHAR(255)", nullable = false)
-    private String url;
+    @Column(length = 255)
+    private String contentType; // Столбец для хранения типа содержимого (например, "image/png")
 
-    @Column(columnDefinition = "VARCHAR(255)", nullable = false)
-    private String name;
+    // Дополнительное поле для хранения заголовка страницы
+    @Transient
+    private String title;
+
+    // Дополнительное поле для хранения текста страницы
+    @Transient
+    private String text;
+
+    // Метод для извлечения заголовка из HTML контента
+    public String getTitle() {
+        if (content != null) {
+            Document doc = Jsoup.parse(content);
+            return doc.title(); // Извлекаем заголовок страницы из тега <title>
+        }
+        return null;
+    }
+
+    // Метод для извлечения текста из HTML контента
+    public String getText() {
+        if (content != null) {
+            Document doc = Jsoup.parse(content);
+            return doc.text(); // Извлекаем текст из HTML (без тегов)
+        }
+        return null;
+    }
 }
