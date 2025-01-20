@@ -11,6 +11,11 @@ import searchengine.model.Page;
 import searchengine.model.Site;
 import searchengine.model.Index;
 import searchengine.model.IndexingStatus;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
 
 import java.io.IOException;
@@ -202,5 +207,25 @@ public class HtmlFetcher {
         }
 
         return lemmas;
+    }
+
+    public static boolean indexSinglePage(String url) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .build();
+
+            HttpResponse<String> response = HttpClient.newHttpClient()
+                    .send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("Ошибка при индексации страницы: " + e.getMessage());
+            return false;
+        }
     }
 }

@@ -9,7 +9,7 @@ import searchengine.services.IndexingService;
 import searchengine.services.StatisticsService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-
+import searchengine.HtmlFetcher;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -87,7 +87,7 @@ public class ApiController {
         }
 
         // Запускаем индексацию страницы
-        boolean indexingResult = indexingService.indexSinglePage(url);
+        boolean indexingResult = HtmlFetcher.indexSinglePage(url);
 
         if (indexingResult) {
             Map<String, Object> successResponse = new HashMap<>();

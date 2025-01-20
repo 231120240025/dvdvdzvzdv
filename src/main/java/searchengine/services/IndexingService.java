@@ -263,30 +263,4 @@ public class IndexingService {
 
         return validUrls.stream().anyMatch(url::startsWith); // Проверяем, начинается ли URL с одного из допустимых
     }
-
-    // Индексация страницы по URL
-    public boolean indexSinglePage(String url) {
-        try {
-            // Пример запроса на страницу для проверки её доступности
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .build();
-
-            HttpResponse<String> response = HttpClient.newHttpClient()
-                    .send(request, HttpResponse.BodyHandlers.ofString());
-
-            // Логика обработки страницы для индексации
-            if (response.statusCode() == 200) {
-                // Индексация страницы успешна
-                // Здесь нужно добавить логику парсинга контента и сохранения данных
-                return true;
-            } else {
-                return false;
-            }
-        } catch (Exception e) {
-            // Логируем ошибку
-            System.err.println("Ошибка при индексации страницы: " + e.getMessage());
-            return false;
-        }
-    }
 }
