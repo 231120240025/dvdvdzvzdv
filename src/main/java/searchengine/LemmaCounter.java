@@ -13,26 +13,35 @@ public class LemmaCounter {
     public static HashMap<String, Integer> countLemmas(String text, String language) throws IOException {
         LuceneMorphology morphology = getLuceneMorphology(language);
         HashMap<String, Integer> lemmaCounts = new HashMap<>();
-
-        // Убираем все символы, которые не являются буквами
+        text = removeHtmlTags(text);
         text = text.replaceAll("[^a-zA-Zа-яА-ЯёЁ]", " ");
-
-        // Разбиваем текст на слова
         String[] words = text.split("\\s+");
 
         for (String word : words) {
-            // Приводим слово к нижнему регистру
             word = word.toLowerCase();
-
-            // Получаем лемму для каждого слова
-            List<String> lemmas = morphology.getMorphInfo(word);
-            if (!lemmas.isEmpty()) {
-                String lemma = lemmas.get(0).split("\\|")[0]; // Первое значение — это лемма
+            List<String> morphInfo = morphology.getMorphInfo(word);
+            if (!morphInfo.isEmpty()) {
+                String lemma = morphInfo.get(0).split("\\|")[0];
+                String partOfSpeech = morphInfo.get(0).split("\\|")[1];
+                if (isStopWord(partOfSpeech, language)) {
+                    continue;
+                }
                 lemmaCounts.put(lemma, lemmaCounts.getOrDefault(lemma, 0) + 1);
             }
         }
 
         return lemmaCounts;
+    }
+
+    private static boolean isStopWord(String partOfSpeech, String language) {
+        if ("ru".equalsIgnoreCase(language)) {
+            return partOfSpeech.contains("СОЮЗ") || partOfSpeech.contains("МЕЖД") || partOfSpeech.contains("ПРЕДЛОГ")
+                    || partOfSpeech.contains("МС") || partOfSpeech.contains("ЧАСТ") || partOfSpeech.contains("ПР_С")
+                    || partOfSpeech.contains("ОКР_ЧАСТ");
+        } else if ("en".equalsIgnoreCase(language)) {
+            return partOfSpeech.contains("PREP") || partOfSpeech.contains("CONJ") || partOfSpeech.contains("DET");
+        }
+        return false;
     }
 
     private static LuceneMorphology getLuceneMorphology(String language) throws IOException {
@@ -45,23 +54,22 @@ public class LemmaCounter {
         }
     }
 
+    private static String removeHtmlTags(String text) {
+        return text.replaceAll("<[^>]*>", "").replaceAll("&[^;]+;", "");
+    }
+
     public static void main(String[] args) {
-        // Русский текст
-        String russianText = "Пример текста для лемматизации. Текст содержит несколько слов для анализа.";
-        // Английский текст
-        String englishText = "Example text for lemmatization. The text contains several words for analysis.";
+        String russianText = "<html><body>Пример текста для <b>лемматизации</b>. Текст содержит несколько <i>слов</i> для анализа.</body></html>";
+        String englishText = "<html><body>Example text for <b>lemmatization</b>. The text contains several <i>words</i> for analysis.</body></html>";
 
         try {
-            // Обрабатываем русский текст
             System.out.println("Леммы для русского текста:");
             HashMap<String, Integer> russianLemmaCounts = countLemmas(russianText, "ru");
             for (Map.Entry<String, Integer> entry : russianLemmaCounts.entrySet()) {
                 System.out.println("Лемма: " + entry.getKey() + ", Количество: " + entry.getValue());
             }
 
-            System.out.println(); // Пустая строка для разделения
-
-            // Обрабатываем английский текст
+            System.out.println();
             System.out.println("Lemmas for English text:");
             HashMap<String, Integer> englishLemmaCounts = countLemmas(englishText, "en");
             for (Map.Entry<String, Integer> entry : englishLemmaCounts.entrySet()) {
