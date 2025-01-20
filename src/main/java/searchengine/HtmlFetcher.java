@@ -6,9 +6,12 @@ import org.apache.lucene.morphology.russian.RussianLuceneMorphology;
 import org.apache.lucene.morphology.english.EnglishLuceneMorphology;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import searchengine.model.Lemma;
 import searchengine.model.Page;
 import searchengine.model.Site;
+import searchengine.model.Index;
 import searchengine.model.IndexingStatus;
+import java.util.ArrayList;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -18,8 +21,8 @@ import java.util.Map;
 
 public class HtmlFetcher {
 
-    private static EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("searchengine"); // Create the EntityManagerFactory
-    private static EntityManager entityManager = entityManagerFactory.createEntityManager(); // Create the EntityManager
+    private static final EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("searchengine");
+    private static final EntityManager entityManager = entityManagerFactory.createEntityManager();
 
     private static LuceneMorphology russianMorphology;
     private static LuceneMorphology englishMorphology;
@@ -36,8 +39,8 @@ public class HtmlFetcher {
 
     public static void main(String[] args) {
         String[] urls = {
-                "https://www.playback.ru",  // URL первого сайта
-                "https://www.ipfran.ru"     // URL второго сайта
+                "https://www.playback.ru",
+                "https://www.ipfran.ru"
         };
 
         for (String url : urls) {
@@ -46,34 +49,26 @@ public class HtmlFetcher {
             System.out.println("=====================================");
 
             try {
-                // Получаем HTML-код страницы
                 Document document = Jsoup.connect(url).get();
-
-                // Получаем текст страницы
                 String text = document.body().text();
-
-                // Преобразуем текст в леммы
                 Map<String, Integer> lemmas = extractLemmas(text);
 
-                // Выводим результат
                 System.out.println("\nЛеммы для страницы:");
                 System.out.println("-------------------------------------");
                 lemmas.forEach((lemma, count) ->
                         System.out.printf("%-20s : %d%n", lemma, count)
                 );
 
-                // Получаем или создаем сайт для сохранения страницы
                 Site site = getOrCreateSite(url);
 
-                // Создаем объект страницы и заполняем его
                 Page page = new Page();
                 page.setPath(url);
-                page.setContent(document.html()); // Сохраняем весь HTML
-                page.setCode(200); // Код ответа, 200 для успешного запроса
-                page.setSite(site); // Связываем страницу с сайтом
+                page.setContent(document.html());
+                page.setCode(200);
+                page.setSite(site);
 
-                // Сохраняем страницу в базе данных
                 savePage(page);
+                saveLemmasAndIndexes(page, lemmas);
 
                 System.out.println("\nДанные страницы успешно сохранены в базе.");
             } catch (IOException e) {
@@ -85,7 +80,6 @@ public class HtmlFetcher {
             System.out.println("=====================================\n");
         }
 
-        // Закрываем EntityManager после выполнения всех операций
         entityManager.close();
         entityManagerFactory.close();
     }
@@ -117,6 +111,70 @@ public class HtmlFetcher {
         entityManager.persist(page);
         entityManager.getTransaction().commit();
     }
+
+    private static void saveLemmasAndIndexes(Page page, Map<String, Integer> lemmas) {
+        entityManager.getTransaction().begin();
+
+        Map<String, Lemma> lemmaCache = new HashMap<>();
+
+        // Получаем существующие леммы
+        List<Lemma> existingLemmas = entityManager.createQuery(
+                        "SELECT l FROM Lemma l WHERE l.lemma IN :lemmas AND l.site = :site", Lemma.class)
+                .setParameter("lemmas", lemmas.keySet())
+                .setParameter("site", page.getSite())
+                .getResultList();
+
+        for (Lemma lemma : existingLemmas) {
+            lemmaCache.put(lemma.getLemma(), lemma);
+        }
+
+        int batchCounter = 0;
+        List<Index> indexesToSave = new ArrayList<>();
+
+        for (Map.Entry<String, Integer> entry : lemmas.entrySet()) {
+            String lemmaText = entry.getKey();
+            int count = entry.getValue();
+
+            Lemma lemma = lemmaCache.getOrDefault(lemmaText, null);
+
+            if (lemma == null) {
+                lemma = new Lemma();
+                lemma.setLemma(lemmaText);
+                lemma.setFrequency(1);
+                lemma.setSite(page.getSite());
+                entityManager.persist(lemma);
+                lemmaCache.put(lemmaText, lemma);
+            } else {
+                lemma.setFrequency(lemma.getFrequency() + 1);
+                entityManager.merge(lemma);
+            }
+
+            Index index = new Index();
+            index.setPage(page);
+            index.setLemma(lemma);
+            index.setRank((float) count);
+            indexesToSave.add(index);
+
+            // Каждые 30 записей отправляем в базу
+            batchCounter++;
+            if (batchCounter % 30 == 0) {
+                for (Index idx : indexesToSave) {
+                    entityManager.persist(idx);
+                }
+                entityManager.flush();
+                entityManager.clear();
+                indexesToSave.clear();
+            }
+        }
+
+        // Оставшиеся индексы
+        for (Index idx : indexesToSave) {
+            entityManager.persist(idx);
+        }
+
+        entityManager.getTransaction().commit();
+    }
+
 
     private static Map<String, Integer> extractLemmas(String text) {
         Map<String, Integer> lemmas = new HashMap<>();
