@@ -13,7 +13,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -35,10 +34,11 @@ public class IndexingService {
     private ExecutorService executorService;
     private ForkJoinPool forkJoinPool;
 
-    public IndexingService(SitesList sitesList, SiteRepository siteRepository, PageRepository pageRepository ) {
+    public IndexingService(SitesList sitesList, SiteRepository siteRepository,  PageRepository pageRepository ) {
         this.sitesList = sitesList;
         this.siteRepository = siteRepository;
         this.pageRepository = pageRepository;
+
 
     }
 
