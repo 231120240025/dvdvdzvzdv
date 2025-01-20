@@ -9,6 +9,10 @@ import searchengine.model.IndexingStatus;
 import searchengine.model.Page;
 import searchengine.repository.PageRepository;
 import searchengine.repository.SiteRepository;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -249,5 +253,40 @@ public class IndexingService {
         }
 
         return indexedSiteUrls;
+    }
+
+    // Проверяем, что URL относится к одному из сайтов в конфигурации
+    public boolean isValidUrl(String url) {
+        List<String> validUrls = sitesList.getSites().stream()
+                .map(site -> site.getUrl())  // Получаем список всех URL из конфигурации
+                .toList();
+
+        return validUrls.stream().anyMatch(url::startsWith); // Проверяем, начинается ли URL с одного из допустимых
+    }
+
+    // Индексация страницы по URL
+    public boolean indexSinglePage(String url) {
+        try {
+            // Пример запроса на страницу для проверки её доступности
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .build();
+
+            HttpResponse<String> response = HttpClient.newHttpClient()
+                    .send(request, HttpResponse.BodyHandlers.ofString());
+
+            // Логика обработки страницы для индексации
+            if (response.statusCode() == 200) {
+                // Индексация страницы успешна
+                // Здесь нужно добавить логику парсинга контента и сохранения данных
+                return true;
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            // Логируем ошибку
+            System.err.println("Ошибка при индексации страницы: " + e.getMessage());
+            return false;
+        }
     }
 }

@@ -4,9 +4,10 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import jakarta.persistence.Index;  // For Javax Persistence
 
 @Entity
-@Table(name = "lemma")
+@Table(name = "lemma", indexes = @Index(name = "idx_lemma", columnList = "lemma"))
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,5 +27,4 @@ public class Lemma {
 
     @Column(name = "frequency", nullable = false)
     private Integer frequency;
-
 }
