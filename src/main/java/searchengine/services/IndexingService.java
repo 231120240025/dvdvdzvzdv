@@ -254,13 +254,4 @@ public class IndexingService {
 
         return indexedSiteUrls;
     }
-
-    // Проверяем, что URL относится к одному из сайтов в конфигурации
-    public boolean isValidUrl(String url) {
-        List<String> validUrls = sitesList.getSites().stream()
-                .map(site -> site.getUrl())  // Получаем список всех URL из конфигурации
-                .toList();
-
-        return validUrls.stream().anyMatch(url::startsWith); // Проверяем, начинается ли URL с одного из допустимых
-    }
 }

@@ -9,7 +9,7 @@ import searchengine.services.IndexingService;
 import searchengine.services.StatisticsService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import searchengine.HtmlFetcher;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -64,41 +64,6 @@ public class ApiController {
         Map<String, Object> successResponse = new HashMap<>();
         successResponse.put("result", true);
         return ResponseEntity.ok(successResponse);
-    }
-
-    @PostMapping("/indexPage")
-    public ResponseEntity<Map<String, Object>> indexPage(@RequestBody Map<String, String> request) {
-        String url = request.get("url");
-
-        // Проверяем, что URL не пустой
-        if (url == null || url.isEmpty()) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("result", false);
-            errorResponse.put("error", "Не указан URL страницы");
-            return ResponseEntity.badRequest().body(errorResponse);
-        }
-
-        // Проверяем, что URL соответствует допустимым сайтам
-        if (!indexingService.isValidUrl(url)) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("result", false);
-            errorResponse.put("error", "Данная страница находится за пределами сайтов, указанных в конфигурационном файле");
-            return ResponseEntity.badRequest().body(errorResponse);
-        }
-
-        // Запускаем индексацию страницы
-        boolean indexingResult = HtmlFetcher.indexSinglePage(url);
-
-        if (indexingResult) {
-            Map<String, Object> successResponse = new HashMap<>();
-            successResponse.put("result", true);
-            return ResponseEntity.ok(successResponse);
-        } else {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("result", false);
-            errorResponse.put("error", "Ошибка при индексации страницы");
-            return ResponseEntity.status(500).body(errorResponse);
-        }
     }
 }
 
