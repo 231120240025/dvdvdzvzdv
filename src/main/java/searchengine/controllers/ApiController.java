@@ -66,4 +66,3 @@ public class ApiController {
         return ResponseEntity.ok(successResponse);
     }
 }
-

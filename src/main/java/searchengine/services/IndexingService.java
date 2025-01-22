@@ -9,7 +9,10 @@ import searchengine.model.IndexingStatus;
 import searchengine.model.Page;
 import searchengine.repository.PageRepository;
 import searchengine.repository.SiteRepository;
-
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -83,7 +86,7 @@ public class IndexingService {
         updateSitesStatusToFailed("Индексация остановлена пользователем");
     }
 
-    public void indexPageFull(String url) {
+    public void indexPage(String url) {
         logger.info("Индексация отдельной страницы: {}", url);
 
         // Проверяем, находится ли URL в рамках указанных сайтов
@@ -251,8 +254,4 @@ public class IndexingService {
 
         return indexedSiteUrls;
     }
-
-
-
-
 }
